@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop Checker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shop Checker - Mobile</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -12,136 +12,121 @@
     <style>
         body { 
             font-family: 'Inter', 'Noto Sans JP', sans-serif; 
-            background-color: #f8fafc; 
+            background-color: #f1f5f9; 
             color: #334155; 
+            -webkit-tap-highlight-color: transparent;
         }
         /* スクロールバー */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         
-        .drag-active { 
-            background-color: #eff6ff !important; 
-            border-color: #3b82f6 !important; 
-            transform: scale(1.02);
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
-        }
         .card-shadow { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
-        .card-hover:hover {
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            transform: translateY(-2px);
-        }
+        
         /* タグアニメーション */
-        .tag-anim { transition: all 0.2s ease; }
         .tag-active {
-            transform: scale(1.05);
+            transform: scale(1.02);
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             z-index: 10;
         }
-        .tag-inactive { opacity: 0.4; transform: scale(0.95); }
+        .tag-inactive { opacity: 0.5; }
         
         /* フェードイン */
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* スマホ用調整 */
+        input, textarea, button { font-size: 16px; } /* iOSでのズーム防止 */
     </style>
 </head>
-<body class="min-h-screen pb-20">
+<body class="min-h-screen pb-20 safe-area-inset-bottom">
 
-    <input type="file" id="hidden-file-input" accept=".csv" class="hidden">
-
-    <div class="max-w-7xl mx-auto px-4 md:px-6 py-8">
+    <div class="max-w-3xl mx-auto px-4 py-6">
         
-        <header class="mb-10 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex items-center gap-4 select-none">
-                <div class="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-200 text-white transform hover:scale-105 transition-transform duration-300">
-                    <i class="fas fa-shopping-bag text-2xl"></i>
-                    <div class="absolute -bottom-1.5 -right-1.5 bg-white rounded-full p-1 border border-slate-100 shadow-sm">
-                        <i class="fas fa-check-circle text-green-500 text-lg bg-white rounded-full"></i>
+        <header class="mb-6 flex items-center justify-between">
+            <div class="flex items-center gap-3 select-none">
+                <div class="relative w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-200 text-white">
+                    <i class="fas fa-shopping-bag text-xl"></i>
+                    <div class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 border border-slate-100 shadow-sm">
+                        <i class="fas fa-check-circle text-green-500 text-sm bg-white rounded-full"></i>
                     </div>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-bold text-slate-800 tracking-tight leading-none">Shop Checker</h1>
-                    <p class="text-xs text-slate-500 font-bold mt-1 tracking-wide uppercase">Retail Analytics Tool</p>
+                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight leading-none">Shop Checker</h1>
+                    <p class="text-[10px] text-slate-500 font-bold mt-1 tracking-wide uppercase">Mobile Edition</p>
                 </div>
             </div>
 
-            <div id="dashboard-controls" class="hidden fade-in">
-                <button onclick="triggerFileUpload()" class="group flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-5 py-2.5 rounded-xl hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm font-bold text-sm">
-                    <i class="fas fa-redo group-hover:rotate-180 transition-transform duration-500"></i> ファイル再読み込み
-                </button>
-            </div>
+            <button id="reload-btn" onclick="resetApp()" class="hidden text-slate-400 hover:text-blue-600 w-10 h-10 flex items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm transition-colors">
+                <i class="fas fa-redo"></i>
+            </button>
         </header>
 
-        <div id="start-screen" class="fade-in mt-8">
-            <div id="drop-zone" class="p-20 border-3 border-dashed border-slate-300 rounded-3xl bg-white text-center transition-all duration-300 cursor-pointer group hover:border-blue-400 hover:bg-blue-50/30 shadow-sm hover:shadow-md">
-                <div class="pointer-events-none flex flex-col items-center justify-center space-y-6">
-                    <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors shadow-inner">
-                        <i class="fas fa-cloud-upload-alt text-5xl text-blue-500"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-700 mb-2">CSVファイルをここにドロップ</h2>
-                        <p class="text-slate-400 font-medium">またはクリックしてファイルを選択</p>
-                    </div>
-                    <div class="pt-2">
-                        <span class="inline-flex items-center gap-1 text-xs bg-slate-100 text-slate-500 px-3 py-1.5 rounded-full font-medium">
-                            <i class="fas fa-file-csv"></i> Keepa Export Compatible
-                        </span>
-                    </div>
+        <div id="start-screen" class="fade-in space-y-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <label for="csv-input" class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                    <i class="fas fa-paste text-blue-500"></i> CSVデータを貼り付け
+                </label>
+                <textarea id="csv-input" 
+                    class="w-full h-48 p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent outline-none transition-all resize-none placeholder-slate-400"
+                    placeholder="ここにデータをペーストしてください&#13;&#10;例:&#13;&#10;&quot;新品: 現在価格&quot;,&quot;ブランド&quot;..."></textarea>
+                
+                <div class="mt-4">
+                    <button onclick="handlePasteData()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 active:scale-95 transition-transform flex items-center justify-center gap-2">
+                        <i class="fas fa-search"></i> 解析スタート
+                    </button>
                 </div>
             </div>
+            
+            <p class="text-center text-xs text-slate-400">
+                KeepaなどのCSVデータを開き、<br>「すべて選択」→「コピー」して貼り付けてください。
+            </p>
         </div>
 
-        <div id="loading" class="hidden flex-col items-center justify-center py-24 fade-in">
-            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-100 border-t-blue-600 mb-4"></div>
-            <p class="text-slate-500 font-medium animate-pulse">データを解析しています...</p>
+        <div id="loading" class="hidden flex-col items-center justify-center py-20 fade-in">
+            <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-100 border-t-blue-600 mb-4"></div>
+            <p class="text-slate-500 text-sm font-medium animate-pulse">解析中...</p>
         </div>
 
         <div id="main-content" class="hidden space-y-6 fade-in">
             
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="border-b border-slate-100">
-                    <div class="px-5 py-3 bg-slate-50/80 flex items-center justify-between border-b border-slate-50">
-                        <div class="font-bold text-slate-700 flex items-center gap-2 text-sm">
-                            <i class="fas fa-certificate text-blue-500"></i> ブランドで絞り込み
+                    <div class="px-4 py-3 bg-slate-50/80 flex items-center justify-between border-b border-slate-50">
+                        <div class="font-bold text-slate-700 flex items-center gap-2 text-xs uppercase tracking-wider">
+                            <i class="fas fa-certificate text-blue-500"></i> Brand
                         </div>
-                        <button id="reset-brand" class="hidden text-xs bg-white border border-red-200 text-red-500 px-2.5 py-1 rounded-md hover:bg-red-50 transition-colors font-bold shadow-sm">
-                            選択解除
+                        <button id="reset-brand" class="hidden text-[10px] bg-white border border-red-200 text-red-500 px-2 py-1 rounded shadow-sm">
+                            クリア
                         </button>
                     </div>
-                    <div class="p-4">
-                        <div class="relative mb-3">
-                            <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
-                            <input type="text" id="search-brand" placeholder="ブランド名を検索..." class="w-full text-sm border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all pl-9 pr-3 py-2.5 outline-none border font-medium">
-                        </div>
-                        <div id="list-brand" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar p-1"></div>
+                    <div class="p-3">
+                        <input type="text" id="search-brand" placeholder="ブランド検索..." class="w-full text-sm border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 pl-3 py-2 outline-none border mb-2">
+                        <div id="list-brand" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar p-1"></div>
                     </div>
                 </div>
 
                 <div>
-                    <div class="px-5 py-3 bg-slate-50/80 flex items-center justify-between border-b border-slate-50">
-                        <div class="font-bold text-slate-700 flex items-center gap-2 text-sm">
-                            <i class="fas fa-tags text-pink-500"></i> サブカテゴリで絞り込み
+                    <div class="px-4 py-3 bg-slate-50/80 flex items-center justify-between border-b border-slate-50">
+                        <div class="font-bold text-slate-700 flex items-center gap-2 text-xs uppercase tracking-wider">
+                            <i class="fas fa-tags text-pink-500"></i> Category
                         </div>
-                        <button id="reset-subcat" class="hidden text-xs bg-white border border-red-200 text-red-500 px-2.5 py-1 rounded-md hover:bg-red-50 transition-colors font-bold shadow-sm">
-                            選択解除
+                        <button id="reset-subcat" class="hidden text-[10px] bg-white border border-red-200 text-red-500 px-2 py-1 rounded shadow-sm">
+                            クリア
                         </button>
                     </div>
-                    <div class="p-4">
-                        <div class="relative mb-3">
-                            <i class="fas fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
-                            <input type="text" id="search-subcat" placeholder="サブカテゴリを検索..." class="w-full text-sm border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-pink-100 transition-all pl-9 pr-3 py-2.5 outline-none border font-medium">
-                        </div>
-                        <div id="list-subcat" class="flex flex-wrap gap-2 max-h-32 overflow-y-auto custom-scrollbar p-1"></div>
+                    <div class="p-3">
+                        <input type="text" id="search-subcat" placeholder="カテゴリ検索..." class="w-full text-sm border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-pink-100 pl-3 py-2 outline-none border mb-2">
+                        <div id="list-subcat" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar p-1"></div>
                     </div>
                 </div>
                 
-                <div class="bg-slate-50 px-5 py-2.5 text-right border-t border-slate-200">
+                <div class="bg-slate-50 px-4 py-2 text-center border-t border-slate-200">
                     <span id="status-text" class="text-xs font-bold text-slate-500"></span>
                 </div>
             </div>
 
-            <div id="results-container" class="space-y-6 pb-20"></div>
+            <div id="results-container" class="space-y-4 pb-10"></div>
         </div>
 
     </div>
@@ -159,12 +144,11 @@
         };
 
         const els = {
-            fileInput: document.getElementById('hidden-file-input'),
-            dropZone: document.getElementById('drop-zone'),
+            csvInput: document.getElementById('csv-input'),
             startScreen: document.getElementById('start-screen'),
             loading: document.getElementById('loading'),
             mainContent: document.getElementById('main-content'),
-            dashboardControls: document.getElementById('dashboard-controls'),
+            reloadBtn: document.getElementById('reload-btn'),
             
             listBrand: document.getElementById('list-brand'),
             listSubcat: document.getElementById('list-subcat'),
@@ -176,13 +160,11 @@
             resultsContainer: document.getElementById('results-container')
         };
 
-        // --- 安全対策: エスケープ処理 ---
         function escapeHtml(unsafe) {
             if (typeof unsafe !== 'string') return unsafe;
             return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        // --- 色生成 ---
         function getBrandColors(str) {
             let hash = 0;
             for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -194,30 +176,15 @@
             };
         }
 
-        // --- ファイル操作関連 ---
-        function triggerFileUpload() {
-            els.fileInput.click();
-        }
+        // --- メイン処理 ---
+        function handlePasteData() {
+            const text = els.csvInput.value.trim();
+            if (!text) {
+                alert('データを貼り付けてください');
+                return;
+            }
 
-        els.dropZone.addEventListener('click', triggerFileUpload);
-        
-        // ドラッグ&ドロップ制御
-        els.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); els.dropZone.classList.add('drag-active'); });
-        els.dropZone.addEventListener('dragleave', () => { els.dropZone.classList.remove('drag-active'); });
-        els.dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            els.dropZone.classList.remove('drag-active');
-            handleFile(e.dataTransfer.files[0]);
-        });
-        els.fileInput.addEventListener('change', (e) => { handleFile(e.target.files[0]); });
-
-        function handleFile(file) {
-            if (!file) return;
-
-            // 画面切り替え: アップロード画面を隠す
             els.startScreen.classList.add('hidden');
-            els.mainContent.classList.add('hidden');
-            els.dashboardControls.classList.add('hidden');
             els.loading.classList.remove('hidden');
             els.loading.classList.add('flex');
 
@@ -226,23 +193,34 @@
             els.searchBrand.value = '';
             els.searchSubcat.value = '';
 
-            Papa.parse(file, {
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    processData(results.data);
-                    els.loading.classList.add('hidden');
-                    els.loading.classList.remove('flex');
-                    els.mainContent.classList.remove('hidden');
-                    els.dashboardControls.classList.remove('hidden');
-                },
-                error: function(err) {
-                    alert('CSV読み込みエラー: ' + err.message);
-                    els.loading.classList.add('hidden');
-                    els.loading.classList.remove('flex');
-                    els.startScreen.classList.remove('hidden'); // 失敗時は戻す
-                }
-            });
+            // 少し待ってから処理（UIブロック回避）
+            setTimeout(() => {
+                Papa.parse(text, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        processData(results.data);
+                        els.loading.classList.add('hidden');
+                        els.loading.classList.remove('flex');
+                        els.mainContent.classList.remove('hidden');
+                        els.reloadBtn.classList.remove('hidden');
+                    },
+                    error: function(err) {
+                        alert('解析エラー: ' + err.message);
+                        resetApp();
+                    }
+                });
+            }, 100);
+        }
+
+        function resetApp() {
+            els.csvInput.value = '';
+            els.mainContent.classList.add('hidden');
+            els.reloadBtn.classList.add('hidden');
+            els.loading.classList.add('hidden');
+            els.loading.classList.remove('flex');
+            els.startScreen.classList.remove('hidden');
+            els.resultsContainer.innerHTML = '';
         }
 
         // --- データ処理 ---
@@ -278,9 +256,8 @@
             });
 
             if (totalCount === 0) {
-                alert('有効なデータが見つかりませんでした。');
-                els.startScreen.classList.remove('hidden');
-                els.mainContent.classList.add('hidden');
+                alert('有効なデータが見つかりませんでした。テキストの内容を確認してください。');
+                resetApp();
                 return;
             }
 
@@ -294,14 +271,13 @@
 
         // --- フィルター機能 ---
         function initFilters() {
-            // ブランドリスト生成
+            // ブランドリスト
             els.listBrand.innerHTML = '';
             state.uniqueBrands.forEach(brand => {
                 const btn = document.createElement('button');
                 const colors = getBrandColors(brand);
-                btn.className = 'tag-anim px-3 py-1 rounded-full text-xs font-bold border mb-1 mr-1 bg-white text-slate-600 border-slate-200 hover:brightness-95';
+                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 bg-white text-slate-600 border-slate-200 transition-all touch-manipulation';
                 btn.textContent = brand;
-                // 色情報をdatasetに保存してアクティブ時に使用
                 btn.dataset.colorBorder = colors.border;
                 btn.dataset.colorBg = colors.bg;
                 btn.dataset.colorText = colors.text;
@@ -314,11 +290,11 @@
                 els.listBrand.appendChild(btn);
             });
 
-            // サブカテゴリリスト生成
+            // サブカテゴリリスト
             els.listSubcat.innerHTML = '';
             state.uniqueSubCats.forEach(subCat => {
                 const btn = document.createElement('button');
-                btn.className = 'tag-anim px-3 py-1 rounded-full text-xs font-bold border mb-1 mr-1 bg-white text-slate-600 border-slate-200 hover:bg-slate-50';
+                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 bg-white text-slate-600 border-slate-200 transition-all touch-manipulation';
                 btn.textContent = subCat;
                 
                 btn.onclick = () => {
@@ -329,7 +305,6 @@
                 els.listSubcat.appendChild(btn);
             });
 
-            // イベントリスナー
             els.searchBrand.oninput = (e) => { state.filters.brandSearch = e.target.value.toLowerCase(); updateFilterUI(); renderResults(); };
             els.searchSubcat.oninput = (e) => { state.filters.subCatSearch = e.target.value.toLowerCase(); updateFilterUI(); renderResults(); };
             
@@ -340,55 +315,39 @@
         }
 
         function updateFilterUI() {
-            // ブランドタグの表示/非表示・アクティブ化
             Array.from(els.listBrand.children).forEach(btn => {
                 const brand = btn.textContent;
                 const match = brand.toLowerCase().includes(state.filters.brandSearch);
                 btn.style.display = match ? 'inline-block' : 'none';
 
                 if (state.filters.selectedBrand === brand) {
-                    btn.classList.add('tag-active');
-                    btn.classList.remove('tag-inactive');
-                    // 色を適用
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 tag-active transition-all';
                     btn.style.backgroundColor = btn.dataset.colorBg;
                     btn.style.borderColor = btn.dataset.colorBorder;
                     btn.style.color = btn.dataset.colorText;
                 } else {
-                    // リセット
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 bg-white text-slate-600 border-slate-200 transition-all ' + (state.filters.selectedBrand ? 'tag-inactive' : '');
                     btn.style.backgroundColor = '';
                     btn.style.borderColor = '';
                     btn.style.color = '';
-                    if (state.filters.selectedBrand) {
-                        btn.classList.add('tag-inactive');
-                        btn.classList.remove('tag-active');
-                    } else {
-                        btn.classList.remove('tag-active', 'tag-inactive');
-                    }
                 }
             });
 
-            // サブカテゴリタグの表示/非表示・アクティブ化
             Array.from(els.listSubcat.children).forEach(btn => {
                 const subCat = btn.textContent;
                 const match = subCat.toLowerCase().includes(state.filters.subCatSearch);
                 btn.style.display = match ? 'inline-block' : 'none';
 
                 if (state.filters.selectedSubCat === subCat) {
-                    btn.classList.add('tag-active');
-                    btn.classList.remove('tag-inactive');
-                    btn.style.backgroundColor = '#fce7f3'; // pink-100
-                    btn.style.borderColor = '#db2777'; // pink-600
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 tag-active transition-all';
+                    btn.style.backgroundColor = '#fce7f3';
+                    btn.style.borderColor = '#db2777';
                     btn.style.color = '#db2777';
                 } else {
+                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 bg-white text-slate-600 border-slate-200 transition-all ' + (state.filters.selectedSubCat ? 'tag-inactive' : '');
                     btn.style.backgroundColor = '';
                     btn.style.borderColor = '';
                     btn.style.color = '';
-                    if (state.filters.selectedSubCat) {
-                        btn.classList.add('tag-inactive');
-                        btn.classList.remove('tag-active');
-                    } else {
-                        btn.classList.remove('tag-active', 'tag-inactive');
-                    }
                 }
             });
 
@@ -396,7 +355,7 @@
             els.resetSubcat.classList.toggle('hidden', !state.filters.selectedSubCat);
         }
 
-        // --- 結果表示 (メイン) ---
+        // --- 結果表示 ---
         function renderResults() {
             els.resultsContainer.innerHTML = '';
             
@@ -405,14 +364,12 @@
             const sortedBrands = Object.keys(state.data).sort();
 
             sortedBrands.forEach(brand => {
-                // ブランドのフィルタ判定
                 if (state.filters.selectedBrand && state.filters.selectedBrand !== brand) return;
                 if (state.filters.brandSearch && !brand.toLowerCase().includes(state.filters.brandSearch)) return;
 
                 const brandData = state.data[brand];
                 const colors = getBrandColors(brand);
 
-                // サブカテゴリの有効性チェック & 数え上げ
                 const validSubCats = Object.keys(brandData).sort().filter(subCat => {
                     if (state.filters.selectedSubCat && state.filters.selectedSubCat !== subCat) return false;
                     if (state.filters.subCatSearch && !subCat.toLowerCase().includes(state.filters.subCatSearch)) return false;
@@ -424,30 +381,28 @@
                 const itemCount = validSubCats.reduce((sum, sc) => sum + brandData[sc].length, 0);
                 totalVisibleItems += itemCount;
 
-                // --- セクション作成 ---
+                // セクション（スマホ向けにシンプル化）
                 const section = document.createElement('div');
                 section.className = 'bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden fade-in';
 
-                // ヘッダー（ボタンに変更：これが重要）
                 const header = document.createElement('button');
-                header.type = "button"; // フォーム送信を防ぐ
-                header.className = 'w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors text-left border-b border-slate-100 group';
-                header.style.borderLeft = `6px solid ${colors.border}`;
+                header.type = "button";
+                header.className = 'w-full flex items-center justify-between p-4 bg-white active:bg-slate-50 transition-colors text-left border-b border-slate-100';
+                header.style.borderLeft = `5px solid ${colors.border}`;
 
                 header.innerHTML = `
-                    <div class="flex items-center gap-4 pointer-events-none"> <h3 class="text-xl font-bold text-slate-800">${escapeHtml(brand)}</h3>
-                        <span class="text-xs font-bold px-2 py-0.5 rounded" style="background:${colors.bg}; color:${colors.text}">${itemCount} Items</span>
+                    <div class="pointer-events-none overflow-hidden">
+                        <h3 class="text-lg font-bold text-slate-800 truncate">${escapeHtml(brand)}</h3>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded inline-block mt-1" style="background:${colors.bg}; color:${colors.text}">${itemCount} Items</span>
                     </div>
-                    <div class="text-slate-400 group-hover:text-slate-600 transition-colors pointer-events-none">
+                    <div class="w-8 h-8 flex items-center justify-center text-slate-400">
                         <i class="fas fa-chevron-down transition-transform duration-300 toggle-icon"></i>
                     </div>
                 `;
 
-                // コンテンツエリア
                 const content = document.createElement('div');
-                content.className = 'p-5 space-y-8 bg-white';
+                content.className = 'p-4 space-y-6 bg-white';
                 
-                // フィルタ時は最初から開く
                 if (hasFilter) {
                     content.classList.remove('hidden');
                     header.querySelector('.toggle-icon').style.transform = 'rotate(0deg)';
@@ -456,7 +411,6 @@
                     header.querySelector('.toggle-icon').style.transform = 'rotate(-90deg)';
                 }
 
-                // 開閉ロジック
                 header.onclick = () => {
                     const isHidden = content.classList.contains('hidden');
                     if (isHidden) {
@@ -468,34 +422,33 @@
                     }
                 };
 
-                // サブカテゴリ & アイテム描画
                 validSubCats.forEach(subCat => {
                     const items = brandData[subCat];
                     const subSection = document.createElement('div');
                     subSection.innerHTML = `
                         <div class="flex items-center gap-2 mb-3">
                             <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-                            <h4 class="font-bold text-slate-700">${escapeHtml(subCat)}</h4>
+                            <h4 class="font-bold text-sm text-slate-700">${escapeHtml(subCat)}</h4>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 gap-3">
                             ${items.map(item => `
-                                <a href="https://www.amazon.co.jp/dp/${escapeHtml(item.asin)}" target="_blank" rel="noopener" class="group block bg-white border border-slate-200 rounded-lg p-3 hover:shadow-lg hover:-translate-y-1 transition-all h-32 flex gap-3 overflow-hidden relative">
-                                    <div class="w-24 flex-shrink-0 flex items-center justify-center bg-slate-50 rounded p-1">
-                                        ${item.image ? `<img src="${escapeHtml(item.image)}" class="max-w-full max-h-full object-contain mix-blend-multiply">` : '<span class="text-[10px] text-slate-300">No Image</span>'}
+                                <a href="https://www.amazon.co.jp/dp/${escapeHtml(item.asin)}" target="_blank" rel="noopener" class="block bg-white border border-slate-200 rounded-lg p-3 active:border-blue-400 active:bg-blue-50 transition-all h-28 flex gap-3 overflow-hidden relative shadow-sm">
+                                    <div class="w-20 flex-shrink-0 flex items-center justify-center bg-slate-50 rounded p-1">
+                                        ${item.image ? `<img src="${escapeHtml(item.image)}" class="max-w-full max-h-full object-contain mix-blend-multiply">` : '<span class="text-[10px] text-slate-300">No Img</span>'}
                                     </div>
-                                    <div class="flex-1 flex flex-col justify-between min-w-0 py-1">
-                                        <p class="text-sm font-medium text-slate-700 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</p>
+                                    <div class="flex-1 flex flex-col justify-between min-w-0 py-0.5">
+                                        <p class="text-xs font-bold text-slate-700 line-clamp-2 leading-snug" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</p>
                                         <div>
-                                            <div class="flex justify-between items-baseline">
-                                                <span class="text-lg font-bold text-slate-800 group-hover:text-red-500">¥${item.price !== '-' ? Number(String(item.price).replace(/,/g,'')).toLocaleString() : '-'}</span>
+                                            <div class="flex justify-between items-end">
+                                                <span class="text-base font-bold text-red-600">¥${item.price !== '-' ? Number(String(item.price).replace(/,/g,'')).toLocaleString() : '-'}</span>
                                             </div>
                                             <div class="flex justify-between text-[10px] text-slate-400 mt-1">
                                                 <span>${escapeHtml(item.date)}</span>
-                                                <span>${escapeHtml(item.asin)}</span>
+                                                <span class="font-mono">${escapeHtml(item.asin)}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400 text-xs">
+                                    <div class="absolute top-2 right-2 text-blue-300 text-[10px]">
                                         <i class="fas fa-external-link-alt"></i>
                                     </div>
                                 </a>
