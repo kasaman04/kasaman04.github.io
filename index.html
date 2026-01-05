@@ -1,470 +1,903 @@
-<!DOCTYPE html>
+```html
+<!doctype html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shop Checker - Mobile</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        body { 
-            font-family: 'Inter', 'Noto Sans JP', sans-serif; 
-            background-color: #f1f5f9; 
-            color: #334155; 
-            -webkit-tap-highlight-color: transparent;
-        }
-        /* スクロールバー */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        
-        .card-shadow { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
-        
-        /* タグアニメーション */
-        .tag-active {
-            transform: scale(1.02);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 10;
-        }
-        .tag-inactive { opacity: 0.5; }
-        
-        /* フェードイン */
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shop Checker - Mobile</title>
 
-        /* スマホ用調整 */
-        input, textarea, button { font-size: 16px; } /* iOSでのズーム防止 */
-    </style>
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- PapaParse -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+  <!-- Font Awesome (icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <style>
+    :root { color-scheme: light; }
+    body {
+      font-family: Inter, "Noto Sans JP", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue",
+        Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .line-clamp-2{
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
 </head>
-<body class="min-h-screen pb-20 safe-area-inset-bottom">
 
-    <div class="max-w-3xl mx-auto px-4 py-6">
-        
-        <header class="mb-6 flex items-center justify-between">
-            <div class="flex items-center gap-3 select-none">
-                <div class="relative w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-blue-200 text-white">
-                    <i class="fas fa-shopping-bag text-xl"></i>
-                    <div class="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 border border-slate-100 shadow-sm">
-                        <i class="fas fa-check-circle text-green-500 text-sm bg-white rounded-full"></i>
-                    </div>
-                </div>
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-800 tracking-tight leading-none">Shop Checker</h1>
-                    <p class="text-[10px] text-slate-500 font-bold mt-1 tracking-wide uppercase">Mobile Edition</p>
-                </div>
-            </div>
+<body class="bg-slate-50 text-slate-900">
+  <div class="min-h-screen max-w-md mx-auto px-4 pb-10">
 
-            <button id="reload-btn" onclick="resetApp()" class="hidden text-slate-400 hover:text-blue-600 w-10 h-10 flex items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm transition-colors">
-                <i class="fas fa-redo"></i>
-            </button>
-        </header>
+    <!-- Header -->
+    <div class="pt-6 pb-4 flex items-start justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">Shop Checker</h1>
+        <p class="text-slate-600 text-sm mt-1">Mobile Edition</p>
+      </div>
 
-        <div id="start-screen" class="fade-in space-y-4">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <label for="csv-input" class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                    <i class="fas fa-paste text-blue-500"></i> CSVデータを貼り付け
-                </label>
-                <textarea id="csv-input" 
-                    class="w-full h-48 p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-blue-500 focus:bg-white focus:border-transparent outline-none transition-all resize-none placeholder-slate-400"
-                    placeholder="ここにデータをペーストしてください&#13;&#10;例:&#13;&#10;&quot;新品: 現在価格&quot;,&quot;ブランド&quot;..."></textarea>
-                
-                <div class="mt-4">
-                    <button onclick="handlePasteData()" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 active:scale-95 transition-transform flex items-center justify-center gap-2">
-                        <i class="fas fa-search"></i> 解析スタート
-                    </button>
-                </div>
-            </div>
-            
-            <p class="text-center text-xs text-slate-400">
-                KeepaなどのCSVデータを開き、<br>「すべて選択」→「コピー」して貼り付けてください。
-            </p>
-        </div>
-
-        <div id="loading" class="hidden flex-col items-center justify-center py-20 fade-in">
-            <div class="animate-spin rounded-full h-10 w-10 border-4 border-blue-100 border-t-blue-600 mb-4"></div>
-            <p class="text-slate-500 text-sm font-medium animate-pulse">解析中...</p>
-        </div>
-
-        <div id="main-content" class="hidden space-y-6 fade-in">
-            
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="border-b border-slate-100">
-                    <div class="px-4 py-3 bg-slate-50/80 flex items-center justify-between border-b border-slate-50">
-                        <div class="font-bold text-slate-700 flex items-center gap-2 text-xs uppercase tracking-wider">
-                            <i class="fas fa-certificate text-blue-500"></i> Brand
-                        </div>
-                        <button id="reset-brand" class="hidden text-[10px] bg-white border border-red-200 text-red-500 px-2 py-1 rounded shadow-sm">
-                            クリア
-                        </button>
-                    </div>
-                    <div class="p-3">
-                        <input type="text" id="search-brand" placeholder="ブランド検索..." class="w-full text-sm border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-100 pl-3 py-2 outline-none border mb-2">
-                        <div id="list-brand" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar p-1"></div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="px-4 py-3 bg-slate-50/80 flex items-center justify-between border-b border-slate-50">
-                        <div class="font-bold text-slate-700 flex items-center gap-2 text-xs uppercase tracking-wider">
-                            <i class="fas fa-tags text-pink-500"></i> Category
-                        </div>
-                        <button id="reset-subcat" class="hidden text-[10px] bg-white border border-red-200 text-red-500 px-2 py-1 rounded shadow-sm">
-                            クリア
-                        </button>
-                    </div>
-                    <div class="p-3">
-                        <input type="text" id="search-subcat" placeholder="カテゴリ検索..." class="w-full text-sm border-slate-200 rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-pink-100 pl-3 py-2 outline-none border mb-2">
-                        <div id="list-subcat" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar p-1"></div>
-                    </div>
-                </div>
-                
-                <div class="bg-slate-50 px-4 py-2 text-center border-t border-slate-200">
-                    <span id="status-text" class="text-xs font-bold text-slate-500"></span>
-                </div>
-            </div>
-
-            <div id="results-container" class="space-y-4 pb-10"></div>
-        </div>
-
+      <button id="reset-btn"
+        class="hidden shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-white shadow-sm border border-slate-200 active:scale-[0.98]"
+        title="リセット"
+        type="button">
+        <i class="fa-solid fa-rotate-left text-slate-700"></i>
+      </button>
     </div>
 
-    <script>
-        // --- 設定・状態 ---
-        const state = {
-            data: {},
-            filters: {
-                brandSearch: '', subCatSearch: '',
-                selectedBrand: null, selectedSubCat: null
-            },
-            uniqueBrands: [],
-            uniqueSubCats: []
+    <!-- Start Screen -->
+    <section id="start-screen" class="mt-2">
+      <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-4">
+        <h2 class="text-base font-semibold">CSVデータを貼り付け</h2>
+
+        <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+          KeepaなどのCSVを開き、「すべて選択 → コピー」して貼り付けてください。<br />
+          列が減っていても動作するようにしています。
+        </p>
+
+        <textarea id="csv-input"
+          class="mt-3 w-full h-44 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-slate-300"
+          placeholder="ここにCSV（または表のコピペ）を貼り付け"></textarea>
+
+        <div class="mt-3 flex items-center gap-2">
+          <button id="start-btn"
+            class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 text-white py-2.5 text-sm font-semibold shadow-sm active:scale-[0.99]"
+            type="button">
+            <i class="fa-solid fa-play"></i>
+            解析スタート
+          </button>
+
+          <button id="clear-input-btn"
+            class="inline-flex items-center justify-center w-12 h-11 rounded-xl bg-white border border-slate-200 shadow-sm active:scale-[0.99]"
+            title="入力クリア"
+            type="button">
+            <i class="fa-solid fa-eraser text-slate-700"></i>
+          </button>
+        </div>
+
+        <div class="mt-3 text-xs text-slate-500">
+          最低限おすすめ：<span class="font-semibold">ASIN</span> / <span class="font-semibold">商品名</span><br>
+          任意：ブランド / カテゴリ: サブ / 画像 / 発売日 / 価格（新品/Amazon/BuyBox/現在価格など）
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading -->
+    <section id="loading-screen" class="hidden mt-6">
+      <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full border-2 border-slate-200 border-t-slate-900 animate-spin"></div>
+        <div>
+          <div class="font-semibold">解析中...</div>
+          <div class="text-sm text-slate-600">データ量が多い場合、少し時間がかかります。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main -->
+    <section id="main-screen" class="hidden mt-4">
+
+      <!-- Filters -->
+      <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-4">
+        <div class="grid grid-cols-1 gap-4">
+
+          <!-- Brand -->
+          <div>
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold">Brand</h3>
+              <button id="brand-clear-btn"
+                class="text-xs text-slate-600 underline decoration-slate-300 hover:text-slate-900"
+                type="button">
+                クリア
+              </button>
+            </div>
+
+            <input id="brand-search" type="text"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+              placeholder="ブランド検索" />
+
+            <div id="brand-tags" class="mt-2 flex flex-wrap gap-2 max-h-28 overflow-auto no-scrollbar"></div>
+          </div>
+
+          <!-- Category -->
+          <div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-semibold">Category</h3>
+
+                <!-- ALL View -->
+                <button id="all-view-btn"
+                  class="px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm active:scale-[0.99]"
+                  type="button">
+                  ALL View
+                </button>
+              </div>
+
+              <button id="subcat-clear-btn"
+                class="text-xs text-slate-600 underline decoration-slate-300 hover:text-slate-900"
+                type="button">
+                クリア
+              </button>
+            </div>
+
+            <input id="subcat-search" type="text"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+              placeholder="カテゴリ（サブ）検索" />
+
+            <div id="subcat-tags" class="mt-2 flex flex-wrap gap-2 max-h-28 overflow-auto no-scrollbar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="mt-4" id="results-container"></div>
+    </section>
+  </div>
+
+  <script>
+    // -----------------------------
+    // Column aliases（列名ゆらぎ吸収）
+    // -----------------------------
+    const COLUMN_ALIASES = {
+      asin: ["ASIN", "asin"],
+      title: ["商品名", "商品 名", "タイトル", "title", "Title", "商品"],
+      brand: ["ブランド", "Brand", "brand", "メーカー", "メーカー名"],
+      subCat: ["カテゴリ: サブ", "カテゴリ:サブ", "カテゴリ（サブ）", "カテゴリ サブ", "Category", "Sub Category", "SubCategory"],
+      image: ["画像", "Image", "image", "画像URL", "画像 URL", "imageUrl"],
+      releaseDate: ["発売日", "Release Date", "releaseDate", "発売 日"],
+      price: [
+        "新品: 現在価格",
+        "新品 現在価格",
+        "新品価格",
+        "Amazon: 現在価格",
+        "Amazon 現在価格",
+        "Buy Box 🚚: 現在価格",
+        "Buy Box: 現在価格",
+        "BuyBox: 現在価格",
+        "現在価格",
+        "価格"
+      ],
+      purchasesLastMonth: ["先月の購入", "先月 購入", "Last month purchases", "購入数(先月)"],
+    };
+
+    // -----------------------------
+    // State
+    // -----------------------------
+    const state = {
+      data: {}, // brand -> subCat -> items[]
+      uniqueBrands: [],
+      uniqueSubCats: [],
+      filters: {
+        brandSearch: "",
+        subCatSearch: "",
+        selectedBrand: null,
+        selectedSubCat: null,
+
+        // ALL View: 押したらカテゴリ別に全表示（カテゴリタグを押さなくても出る）
+        allView: false,
+
+        // ALL View OFFに戻す時に復元する用（内部）
+        _savedSubCat: null
+      }
+    };
+
+    // -----------------------------
+    // DOM refs
+    // -----------------------------
+    const startScreen = document.getElementById("start-screen");
+    const loadingScreen = document.getElementById("loading-screen");
+    const mainScreen = document.getElementById("main-screen");
+
+    const csvInput = document.getElementById("csv-input");
+    const startBtn = document.getElementById("start-btn");
+    const clearInputBtn = document.getElementById("clear-input-btn");
+    const resetBtn = document.getElementById("reset-btn");
+
+    const brandSearch = document.getElementById("brand-search");
+    const subCatSearch = document.getElementById("subcat-search");
+    const brandClearBtn = document.getElementById("brand-clear-btn");
+    const subCatClearBtn = document.getElementById("subcat-clear-btn");
+
+    const allViewBtn = document.getElementById("all-view-btn");
+
+    const brandTags = document.getElementById("brand-tags");
+    const subCatTags = document.getElementById("subcat-tags");
+    const resultsContainer = document.getElementById("results-container");
+
+    // -----------------------------
+    // Helpers
+    // -----------------------------
+    function normalizeKey(k) {
+      if (typeof k !== "string") return "";
+      return k.replace(/^\uFEFF/, "").trim(); // BOM除去 + trim
+    }
+
+    function normalizeRowKeys(row) {
+      const out = {};
+      for (const [k, v] of Object.entries(row || {})) {
+        out[normalizeKey(k)] = v;
+      }
+      return out;
+    }
+
+    function getField(row, aliases) {
+      for (const key of aliases) {
+        const v = row[key];
+        if (v === 0) return "0";
+        if (v === null || v === undefined) continue;
+        const s = String(v).trim();
+        if (s !== "") return s;
+      }
+      return "";
+    }
+
+    function firstImage(urls) {
+      if (!urls) return "";
+      const s = String(urls).trim();
+      if (!s) return "";
+      const first = s.split(";")[0].trim();
+      return first;
+    }
+
+    function parsePrice(value) {
+      if (value === null || value === undefined) return null;
+      const raw = String(value).trim();
+      if (!raw) return null;
+      if (raw === "-") return null;
+
+      // "1,292" / "¥1292" / "1292円" などを想定
+      const digits = raw.replace(/[^\d]/g, "");
+      if (!digits) return null;
+      const n = Number(digits);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function formatYen(n) {
+      try { return "¥" + Number(n).toLocaleString("ja-JP"); }
+      catch { return "¥" + String(n); }
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function amazonUrl(asin) {
+      const a = String(asin || "").trim();
+      if (!a) return "";
+      return `https://www.amazon.co.jp/dp/${encodeURIComponent(a)}`;
+    }
+
+    function getBrandColors(brand) {
+      const s = String(brand || "Unknown");
+      let hash = 0;
+      for (let i = 0; i < s.length; i++) hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
+      const hue = hash % 360;
+      return {
+        bg: `hsl(${hue} 70% 92%)`,
+        border: `hsl(${hue} 60% 70%)`,
+        text: `hsl(${hue} 35% 28%)`
+      };
+    }
+
+    function isAnyFilterActive() {
+      const f = state.filters;
+      return !!(f.brandSearch || f.subCatSearch || f.selectedBrand || f.selectedSubCat || f.allView);
+    }
+
+    function updateAllViewButtonUI() {
+      const on = !!state.filters.allView;
+      // オン：オレンジ / オフ：白
+      allViewBtn.style.background = on ? "rgb(249 115 22)" : "rgb(255 255 255)";
+      allViewBtn.style.borderColor = on ? "rgb(249 115 22)" : "rgb(226 232 240)";
+      allViewBtn.style.color = on ? "white" : "rgb(15 23 42)";
+    }
+
+    // -----------------------------
+    // UI transitions
+    // -----------------------------
+    function showStart() {
+      startScreen.classList.remove("hidden");
+      loadingScreen.classList.add("hidden");
+      mainScreen.classList.add("hidden");
+      resetBtn.classList.add("hidden");
+    }
+
+    function showLoading() {
+      startScreen.classList.add("hidden");
+      loadingScreen.classList.remove("hidden");
+      mainScreen.classList.add("hidden");
+      resetBtn.classList.add("hidden");
+    }
+
+    function showMain() {
+      startScreen.classList.add("hidden");
+      loadingScreen.classList.add("hidden");
+      mainScreen.classList.remove("hidden");
+      resetBtn.classList.remove("hidden");
+    }
+
+    // -----------------------------
+    // Data processing
+    // -----------------------------
+    function processData(rows) {
+      const grouped = {};
+      const brands = new Set();
+      const subCats = new Set();
+
+      let validCount = 0;
+
+      for (const rawRow of rows || []) {
+        const row = normalizeRowKeys(rawRow);
+
+        const asin = getField(row, COLUMN_ALIASES.asin);
+        const title = getField(row, COLUMN_ALIASES.title);
+        const brandRaw = getField(row, COLUMN_ALIASES.brand);
+        const subCatRaw = getField(row, COLUMN_ALIASES.subCat);
+
+        // 最低限、ASIN/商品名がどちらも空の行はスキップ（空行対策）
+        if (!asin && !title) continue;
+
+        const brand = (brandRaw || "Unknown").trim() || "Unknown";
+        const subCat = (subCatRaw || "その他").trim() || "その他";
+
+        const imageUrl = firstImage(getField(row, COLUMN_ALIASES.image));
+        const releaseDate = getField(row, COLUMN_ALIASES.releaseDate);
+        const priceVal = parsePrice(getField(row, COLUMN_ALIASES.price));
+        const purchasesLastMonth = getField(row, COLUMN_ALIASES.purchasesLastMonth);
+
+        const item = {
+          asin,
+          title: title || asin || "(no title)",
+          brand,
+          subCat,
+          imageUrl,
+          releaseDate,
+          price: priceVal,
+          purchasesLastMonth
         };
 
-        const els = {
-            csvInput: document.getElementById('csv-input'),
-            startScreen: document.getElementById('start-screen'),
-            loading: document.getElementById('loading'),
-            mainContent: document.getElementById('main-content'),
-            reloadBtn: document.getElementById('reload-btn'),
-            
-            listBrand: document.getElementById('list-brand'),
-            listSubcat: document.getElementById('list-subcat'),
-            searchBrand: document.getElementById('search-brand'),
-            searchSubcat: document.getElementById('search-subcat'),
-            resetBrand: document.getElementById('reset-brand'),
-            resetSubcat: document.getElementById('reset-subcat'),
-            statusText: document.getElementById('status-text'),
-            resultsContainer: document.getElementById('results-container')
+        if (!grouped[brand]) grouped[brand] = {};
+        if (!grouped[brand][subCat]) grouped[brand][subCat] = [];
+        grouped[brand][subCat].push(item);
+
+        brands.add(brand);
+        subCats.add(subCat);
+        validCount++;
+      }
+
+      if (validCount === 0) {
+        alert("有効なデータが見つかりませんでした。ヘッダ行（ASIN/商品名など）が含まれているか確認してください。");
+        resetAll();
+        return;
+      }
+
+      state.data = grouped;
+      state.uniqueBrands = Array.from(brands).sort((a,b) => a.localeCompare(b, "ja"));
+      state.uniqueSubCats = Array.from(subCats).sort((a,b) => a.localeCompare(b, "ja"));
+
+      // 初期状態：カテゴリを選ぶか ALL View で出す（好みがあれば変更可）
+      state.filters.selectedBrand = null;
+      state.filters.selectedSubCat = null;
+      state.filters.allView = false;
+      state.filters._savedSubCat = null;
+
+      brandSearch.value = "";
+      subCatSearch.value = "";
+      state.filters.brandSearch = "";
+      state.filters.subCatSearch = "";
+
+      updateAllViewButtonUI();
+      renderFilterTags();
+      renderResults();
+    }
+
+    // -----------------------------
+    // Filters UI
+    // -----------------------------
+    function countItems({ brand = null, subCat = null } = {}) {
+      let c = 0;
+      const data = state.data || {};
+      for (const [b, subMap] of Object.entries(data)) {
+        if (brand && b !== brand) continue;
+        for (const [s, items] of Object.entries(subMap || {})) {
+          if (subCat && s !== subCat) continue;
+          c += (items || []).length;
+        }
+      }
+      return c;
+    }
+
+    function renderFilterTags() {
+      // Brand tags
+      brandTags.innerHTML = "";
+      const bSearch = state.filters.brandSearch.toLowerCase();
+
+      for (const b of state.uniqueBrands) {
+        if (bSearch && !String(b).toLowerCase().includes(bSearch)) continue;
+
+        const colors = getBrandColors(b);
+        const selected = state.filters.selectedBrand === b;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm active:scale-[0.99]";
+        btn.style.background = selected ? colors.border : colors.bg;
+        btn.style.borderColor = colors.border;
+        btn.style.color = colors.text;
+
+        btn.textContent = `${b} (${countItems({ brand: b })})`;
+
+        btn.onclick = () => {
+          state.filters.selectedBrand = (state.filters.selectedBrand === b) ? null : b;
+          renderFilterTags();
+          renderResults();
         };
 
-        function escapeHtml(unsafe) {
-            if (typeof unsafe !== 'string') return unsafe;
-            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        brandTags.appendChild(btn);
+      }
+
+      // SubCat tags
+      subCatTags.innerHTML = "";
+      const sSearch = state.filters.subCatSearch.toLowerCase();
+
+      for (const s of state.uniqueSubCats) {
+        if (sSearch && !String(s).toLowerCase().includes(sSearch)) continue;
+
+        const selected = state.filters.selectedSubCat === s;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "px-3 py-1.5 rounded-full text-xs font-semibold border shadow-sm active:scale-[0.99]";
+        btn.style.background = selected ? "rgb(251 207 232)" : "rgb(255 241 242)";
+        btn.style.borderColor = "rgb(244 114 182)";
+        btn.style.color = "rgb(159 18 57)";
+
+        btn.textContent = `${s} (${countItems({ subCat: s })})`;
+
+        btn.onclick = () => {
+          // ALL View中にカテゴリを押したら、通常モードに戻してそのカテゴリで表示
+          if (state.filters.allView) {
+            state.filters.allView = false;
+            state.filters._savedSubCat = null;
+            updateAllViewButtonUI();
+          }
+
+          state.filters.selectedSubCat = (state.filters.selectedSubCat === s) ? null : s;
+          renderFilterTags();
+          renderResults();
+        };
+
+        subCatTags.appendChild(btn);
+      }
+    }
+
+    // -----------------------------
+    // Results rendering (分岐)
+    // -----------------------------
+    function renderResults() {
+      if (state.filters.allView) return renderResultsCategoryFirst();
+      return renderResultsBrandFirst();
+    }
+
+    // 通常モード：カテゴリタグを選択したときに表示（ALL Viewを押さないと全部は出ない）
+    function renderResultsBrandFirst() {
+      resultsContainer.innerHTML = "";
+
+      const f = state.filters;
+
+      // 通常モードは「カテゴリを押さないと出ない」仕様にする
+      if (!f.selectedSubCat) {
+        const hint = document.createElement("div");
+        hint.className = "bg-white border border-slate-200 shadow-sm rounded-2xl p-5 text-sm text-slate-700";
+        hint.innerHTML = `
+          <div class="font-semibold">カテゴリを選択してください</div>
+          <div class="text-slate-600 mt-1 text-sm leading-relaxed">
+            下のカテゴリタグを押すか、<span class="font-semibold">ALL View</span> を押すと全カテゴリをまとめて表示できます。
+          </div>
+        `;
+        resultsContainer.appendChild(hint);
+        return;
+      }
+
+      const bSearch = f.brandSearch.toLowerCase();
+      const sSearch = f.subCatSearch.toLowerCase();
+
+      const data = state.data || {};
+      const brandList = Object.keys(data).sort((a,b) => a.localeCompare(b, "ja"));
+
+      let totalShown = 0;
+
+      for (const brand of brandList) {
+        if (f.selectedBrand && brand !== f.selectedBrand) continue;
+        if (bSearch && !brand.toLowerCase().includes(bSearch)) continue;
+
+        const subMap = data[brand] || {};
+        const subList = Object.keys(subMap).sort((a,b) => a.localeCompare(b, "ja"));
+
+        // selectedSubCat に一致するものだけ
+        const subCat = f.selectedSubCat;
+        if (!subMap[subCat]) continue;
+
+        // カテゴリ検索がかかっていて一致しないならスキップ
+        if (sSearch && !subCat.toLowerCase().includes(sSearch)) continue;
+
+        const items = subMap[subCat] || [];
+        if (items.length === 0) continue;
+
+        // Brand section
+        const section = document.createElement("div");
+        section.className = "bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden mb-4";
+
+        const header = document.createElement("button");
+        header.type = "button";
+        header.className = "w-full px-4 py-3 flex items-center justify-between gap-3 text-left";
+        const colors = getBrandColors(brand);
+
+        header.innerHTML = `
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="inline-block w-2.5 h-2.5 rounded-full" style="background:${colors.border}"></span>
+              <div class="font-bold truncate">${escapeHtml(brand)}</div>
+            </div>
+            <div class="text-xs text-slate-600 mt-0.5">${items.length} items</div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-slate-500 shrink-0" style="transform:rotate(180deg)"></i>
+        `;
+
+        const body = document.createElement("div");
+        body.className = "px-4 pb-4";
+        body.style.display = "block"; // 選択カテゴリの結果なのでデフォルト展開
+
+        header.onclick = () => {
+          const isOpen = body.style.display !== "none";
+          body.style.display = isOpen ? "none" : "block";
+          header.querySelector("i").style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
+        };
+
+        // Subheader（選択カテゴリ名）
+        const subHeader = document.createElement("div");
+        subHeader.className = "mt-4 mb-2 flex items-baseline justify-between gap-3";
+        subHeader.innerHTML = `
+          <div class="font-semibold text-sm">${escapeHtml(subCat)}</div>
+          <div class="text-xs text-slate-500">${items.length}件</div>
+        `;
+        body.appendChild(subHeader);
+
+        const grid = document.createElement("div");
+        grid.className = "grid grid-cols-1 gap-2";
+
+        for (const item of items) {
+          const card = renderItemCard(item, { showBrandChip: false });
+          grid.appendChild(card);
+          totalShown++;
         }
 
-        function getBrandColors(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            const hue = Math.abs(hash % 360);
-            return {
-                border: `hsl(${hue}, 70%, 50%)`,
-                bg: `hsl(${hue}, 85%, 96%)`,
-                text: `hsl(${hue}, 70%, 30%)`
-            };
+        body.appendChild(grid);
+        section.appendChild(header);
+        section.appendChild(body);
+        resultsContainer.appendChild(section);
+      }
+
+      if (totalShown === 0) {
+        const empty = document.createElement("div");
+        empty.className = "bg-white border border-slate-200 shadow-sm rounded-2xl p-5 text-sm text-slate-600";
+        empty.textContent = "該当データがありません。フィルタ条件を変更するか、入力データを確認してください。";
+        resultsContainer.appendChild(empty);
+      }
+    }
+
+    // ALL View モード：全カテゴリをカテゴリ別に表示（カテゴリを押さなくても出る）
+    function renderResultsCategoryFirst() {
+      resultsContainer.innerHTML = "";
+
+      const f = state.filters;
+      const bSearch = f.brandSearch.toLowerCase();
+      const sSearch = f.subCatSearch.toLowerCase();
+
+      const data = state.data || {};
+      const subCats = state.uniqueSubCats || [];
+
+      let totalShown = 0;
+
+      for (const subCat of subCats) {
+        if (sSearch && !String(subCat).toLowerCase().includes(sSearch)) continue;
+
+        // このカテゴリの全アイテム（ブランド横断）
+        const items = [];
+        for (const [brand, subMap] of Object.entries(data)) {
+          if (f.selectedBrand && brand !== f.selectedBrand) continue;
+          if (bSearch && !brand.toLowerCase().includes(bSearch)) continue;
+
+          const arr = (subMap && subMap[subCat]) ? subMap[subCat] : [];
+          for (const it of arr) items.push(it);
         }
 
-        // --- メイン処理 ---
-        function handlePasteData() {
-            const text = els.csvInput.value.trim();
-            if (!text) {
-                alert('データを貼り付けてください');
-                return;
-            }
+        if (items.length === 0) continue;
 
-            els.startScreen.classList.add('hidden');
-            els.loading.classList.remove('hidden');
-            els.loading.classList.add('flex');
+        const section = document.createElement("div");
+        section.className = "bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden mb-4";
 
-            // 状態リセット
-            state.filters = { brandSearch: '', subCatSearch: '', selectedBrand: null, selectedSubCat: null };
-            els.searchBrand.value = '';
-            els.searchSubcat.value = '';
+        const header = document.createElement("button");
+        header.type = "button";
+        header.className = "w-full px-4 py-3 flex items-center justify-between gap-3 text-left";
+        header.innerHTML = `
+          <div class="min-w-0">
+            <div class="font-bold truncate">${escapeHtml(subCat)}</div>
+            <div class="text-xs text-slate-600 mt-0.5">${items.length} items</div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-slate-500 shrink-0" style="transform:rotate(180deg)"></i>
+        `;
 
-            // 少し待ってから処理（UIブロック回避）
-            setTimeout(() => {
-                Papa.parse(text, {
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: function(results) {
-                        processData(results.data);
-                        els.loading.classList.add('hidden');
-                        els.loading.classList.remove('flex');
-                        els.mainContent.classList.remove('hidden');
-                        els.reloadBtn.classList.remove('hidden');
-                    },
-                    error: function(err) {
-                        alert('解析エラー: ' + err.message);
-                        resetApp();
-                    }
-                });
-            }, 100);
+        const body = document.createElement("div");
+        body.className = "px-4 pb-4";
+        body.style.display = "block"; // ALL View は「出す」が目的なのでデフォルト展開
+
+        header.onclick = () => {
+          const isOpen = body.style.display !== "none";
+          body.style.display = isOpen ? "none" : "block";
+          header.querySelector("i").style.transform = isOpen ? "rotate(0deg)" : "rotate(180deg)";
+        };
+
+        const grid = document.createElement("div");
+        grid.className = "grid grid-cols-1 gap-2 mt-4";
+
+        // 見やすさのためブランド→商品名で軽くソート
+        items.sort((a, b) => {
+          const ab = String(a.brand || "").localeCompare(String(b.brand || ""), "ja");
+          if (ab !== 0) return ab;
+          return String(a.title || "").localeCompare(String(b.title || ""), "ja");
+        });
+
+        for (const item of items) {
+          const card = renderItemCard(item, { showBrandChip: true });
+          grid.appendChild(card);
+          totalShown++;
         }
 
-        function resetApp() {
-            els.csvInput.value = '';
-            els.mainContent.classList.add('hidden');
-            els.reloadBtn.classList.add('hidden');
-            els.loading.classList.add('hidden');
-            els.loading.classList.remove('flex');
-            els.startScreen.classList.remove('hidden');
-            els.resultsContainer.innerHTML = '';
+        body.appendChild(grid);
+        section.appendChild(header);
+        section.appendChild(body);
+        resultsContainer.appendChild(section);
+      }
+
+      if (totalShown === 0) {
+        const empty = document.createElement("div");
+        empty.className = "bg-white border border-slate-200 shadow-sm rounded-2xl p-5 text-sm text-slate-600";
+        empty.textContent = "該当データがありません。フィルタ条件を変更するか、入力データを確認してください。";
+        resultsContainer.appendChild(empty);
+      }
+    }
+
+    function renderItemCard(item, { showBrandChip }) {
+      const card = document.createElement("div");
+      card.className = "rounded-2xl border border-slate-200 bg-slate-50 p-3 flex gap-3 items-start active:scale-[0.995] cursor-pointer";
+      const url = amazonUrl(item.asin);
+
+      const imgHtml = item.imageUrl
+        ? `<img src="${escapeHtml(item.imageUrl)}" alt="" class="w-16 h-16 rounded-xl object-cover bg-white border border-slate-200" loading="lazy">`
+        : `<div class="w-16 h-16 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 text-xs">No<br>Image</div>`;
+
+      const priceHtml = (item.price !== null && item.price !== undefined)
+        ? `<div class="text-sm font-bold">${escapeHtml(formatYen(item.price))}</div>`
+        : "";
+
+      const releaseHtml = item.releaseDate
+        ? `<div class="text-xs text-slate-600 mt-1">発売日: ${escapeHtml(item.releaseDate)}</div>`
+        : "";
+
+      const purchaseHtml = item.purchasesLastMonth
+        ? `<div class="text-xs text-slate-600 mt-1">先月の購入: ${escapeHtml(item.purchasesLastMonth)}</div>`
+        : "";
+
+      const asinHtml = item.asin
+        ? `<div class="text-xs text-slate-500 mt-0.5">ASIN: ${escapeHtml(item.asin)}</div>`
+        : "";
+
+      const brandChip = (() => {
+        if (!showBrandChip) return "";
+        const colors = getBrandColors(item.brand || "Unknown");
+        return `
+          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border"
+            style="background:${colors.bg}; border-color:${colors.border}; color:${colors.text}">
+            ${escapeHtml(item.brand || "Unknown")}
+          </span>
+        `;
+      })();
+
+      card.innerHTML = `
+        ${imgHtml}
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center justify-between gap-2">
+            <div class="min-w-0">${brandChip}</div>
+            ${url ? `<div class="text-xs text-slate-600 inline-flex items-center gap-1 shrink-0"><i class="fa-solid fa-arrow-up-right-from-square"></i> Amazon</div>` : ``}
+          </div>
+
+          <div class="text-sm font-semibold leading-snug mt-1 line-clamp-2">${escapeHtml(item.title)}</div>
+
+          <div class="mt-1 flex items-center justify-between gap-2">
+            ${priceHtml}
+          </div>
+
+          ${releaseHtml}
+          ${purchaseHtml}
+          ${asinHtml}
+        </div>
+      `;
+
+      card.onclick = () => {
+        if (!url) return;
+        window.open(url, "_blank", "noopener,noreferrer");
+      };
+
+      return card;
+    }
+
+    // -----------------------------
+    // Parse (CSV/TSV paste tolerant)
+    // -----------------------------
+    function parsePastedText(text) {
+      Papa.parse(text, {
+        header: true,
+        skipEmptyLines: "greedy",
+        delimiter: "",      // auto-detect（CSV/TSV耐性）
+        quoteChar: '"',
+        escapeChar: '"',
+        dynamicTyping: false,
+        complete: (results) => {
+          const rows = results?.data || [];
+          if (!results?.meta?.fields || results.meta.fields.length === 0) {
+            alert("ヘッダ行が検出できませんでした。ヘッダ行を含めてコピーして貼り付けてください。");
+            resetAll();
+            return;
+          }
+          processData(rows);
+          showMain();
+        },
+        error: (err) => {
+          console.error(err);
+          alert("解析に失敗しました。貼り付けたデータ形式を確認してください。");
+          resetAll();
         }
+      });
+    }
 
-        // --- データ処理 ---
-        function processData(rows) {
-            const grouped = {};
-            const brandsSet = new Set();
-            const subCatsSet = new Set();
-            let totalCount = 0;
+    // -----------------------------
+    // Reset
+    // -----------------------------
+    function resetAll() {
+      state.data = {};
+      state.uniqueBrands = [];
+      state.uniqueSubCats = [];
+      state.filters = {
+        brandSearch: "",
+        subCatSearch: "",
+        selectedBrand: null,
+        selectedSubCat: null,
+        allView: false,
+        _savedSubCat: null
+      };
 
-            rows.forEach(item => {
-                const brand = (item['ブランド'] || 'Unknown').trim();
-                const subCat = (item['カテゴリ: サブ'] || 'その他').trim();
-                
-                brandsSet.add(brand);
-                subCatsSet.add(subCat);
+      brandSearch.value = "";
+      subCatSearch.value = "";
+      brandTags.innerHTML = "";
+      subCatTags.innerHTML = "";
+      resultsContainer.innerHTML = "";
+      updateAllViewButtonUI();
 
-                let imgUrl = item['画像'] ? item['画像'].split(';')[0] : '';
-                const rawPrice = item['新品: 現在価格'];
-                const price = rawPrice ? rawPrice : '-';
-                const releaseDate = item['発売日'] || '-';
+      showStart();
+    }
 
-                if (!grouped[brand]) grouped[brand] = {};
-                if (!grouped[brand][subCat]) grouped[brand][subCat] = [];
+    // -----------------------------
+    // Events
+    // -----------------------------
+    startBtn.addEventListener("click", () => {
+      const text = (csvInput.value || "").trim();
+      if (!text) {
+        alert("CSVデータを貼り付けてください。");
+        return;
+      }
+      showLoading();
+      setTimeout(() => parsePastedText(text), 80);
+    });
 
-                grouped[brand][subCat].push({
-                    title: item['商品名'] || 'No Title',
-                    asin: item['ASIN'] || '',
-                    price: price,
-                    image: imgUrl,
-                    date: releaseDate
-                });
-                totalCount++;
-            });
+    clearInputBtn.addEventListener("click", () => {
+      csvInput.value = "";
+      csvInput.focus();
+    });
 
-            if (totalCount === 0) {
-                alert('有効なデータが見つかりませんでした。テキストの内容を確認してください。');
-                resetApp();
-                return;
-            }
+    resetBtn.addEventListener("click", resetAll);
 
-            state.data = grouped;
-            state.uniqueBrands = Array.from(brandsSet).sort();
-            state.uniqueSubCats = Array.from(subCatsSet).sort();
+    brandSearch.addEventListener("input", (e) => {
+      state.filters.brandSearch = String(e.target.value || "");
+      renderFilterTags();
+      renderResults();
+    });
 
-            initFilters();
-            renderResults();
+    subCatSearch.addEventListener("input", (e) => {
+      state.filters.subCatSearch = String(e.target.value || "");
+      renderFilterTags();
+      renderResults();
+    });
+
+    brandClearBtn.addEventListener("click", () => {
+      state.filters.selectedBrand = null;
+      state.filters.brandSearch = "";
+      brandSearch.value = "";
+      renderFilterTags();
+      renderResults();
+    });
+
+    subCatClearBtn.addEventListener("click", () => {
+      state.filters.selectedSubCat = null;
+      state.filters.subCatSearch = "";
+      subCatSearch.value = "";
+      renderFilterTags();
+      renderResults();
+    });
+
+    allViewBtn.addEventListener("click", () => {
+      const f = state.filters;
+
+      // トグル
+      const next = !f.allView;
+
+      if (next) {
+        // ON：現状のカテゴリ選択を保存して解除（全カテゴリ表示にする）
+        f._savedSubCat = f.selectedSubCat;
+        f.selectedSubCat = null;
+        f.allView = true;
+      } else {
+        // OFF：保存していたカテゴリがあれば復元（元の挙動に戻す）
+        f.allView = false;
+        if (!f.selectedSubCat && f._savedSubCat) {
+          f.selectedSubCat = f._savedSubCat;
         }
+        f._savedSubCat = null;
+      }
 
-        // --- フィルター機能 ---
-        function initFilters() {
-            // ブランドリスト
-            els.listBrand.innerHTML = '';
-            state.uniqueBrands.forEach(brand => {
-                const btn = document.createElement('button');
-                const colors = getBrandColors(brand);
-                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 bg-white text-slate-600 border-slate-200 transition-all touch-manipulation';
-                btn.textContent = brand;
-                btn.dataset.colorBorder = colors.border;
-                btn.dataset.colorBg = colors.bg;
-                btn.dataset.colorText = colors.text;
+      updateAllViewButtonUI();
+      renderFilterTags();
+      renderResults();
+    });
 
-                btn.onclick = () => {
-                    state.filters.selectedBrand = (state.filters.selectedBrand === brand) ? null : brand;
-                    updateFilterUI();
-                    renderResults();
-                };
-                els.listBrand.appendChild(btn);
-            });
-
-            // サブカテゴリリスト
-            els.listSubcat.innerHTML = '';
-            state.uniqueSubCats.forEach(subCat => {
-                const btn = document.createElement('button');
-                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 bg-white text-slate-600 border-slate-200 transition-all touch-manipulation';
-                btn.textContent = subCat;
-                
-                btn.onclick = () => {
-                    state.filters.selectedSubCat = (state.filters.selectedSubCat === subCat) ? null : subCat;
-                    updateFilterUI();
-                    renderResults();
-                };
-                els.listSubcat.appendChild(btn);
-            });
-
-            els.searchBrand.oninput = (e) => { state.filters.brandSearch = e.target.value.toLowerCase(); updateFilterUI(); renderResults(); };
-            els.searchSubcat.oninput = (e) => { state.filters.subCatSearch = e.target.value.toLowerCase(); updateFilterUI(); renderResults(); };
-            
-            els.resetBrand.onclick = () => { state.filters.selectedBrand = null; updateFilterUI(); renderResults(); };
-            els.resetSubcat.onclick = () => { state.filters.selectedSubCat = null; updateFilterUI(); renderResults(); };
-            
-            updateFilterUI();
-        }
-
-        function updateFilterUI() {
-            Array.from(els.listBrand.children).forEach(btn => {
-                const brand = btn.textContent;
-                const match = brand.toLowerCase().includes(state.filters.brandSearch);
-                btn.style.display = match ? 'inline-block' : 'none';
-
-                if (state.filters.selectedBrand === brand) {
-                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 tag-active transition-all';
-                    btn.style.backgroundColor = btn.dataset.colorBg;
-                    btn.style.borderColor = btn.dataset.colorBorder;
-                    btn.style.color = btn.dataset.colorText;
-                } else {
-                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 bg-white text-slate-600 border-slate-200 transition-all ' + (state.filters.selectedBrand ? 'tag-inactive' : '');
-                    btn.style.backgroundColor = '';
-                    btn.style.borderColor = '';
-                    btn.style.color = '';
-                }
-            });
-
-            Array.from(els.listSubcat.children).forEach(btn => {
-                const subCat = btn.textContent;
-                const match = subCat.toLowerCase().includes(state.filters.subCatSearch);
-                btn.style.display = match ? 'inline-block' : 'none';
-
-                if (state.filters.selectedSubCat === subCat) {
-                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 tag-active transition-all';
-                    btn.style.backgroundColor = '#fce7f3';
-                    btn.style.borderColor = '#db2777';
-                    btn.style.color = '#db2777';
-                } else {
-                    btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold border mb-1 mr-1 bg-white text-slate-600 border-slate-200 transition-all ' + (state.filters.selectedSubCat ? 'tag-inactive' : '');
-                    btn.style.backgroundColor = '';
-                    btn.style.borderColor = '';
-                    btn.style.color = '';
-                }
-            });
-
-            els.resetBrand.classList.toggle('hidden', !state.filters.selectedBrand);
-            els.resetSubcat.classList.toggle('hidden', !state.filters.selectedSubCat);
-        }
-
-        // --- 結果表示 ---
-        function renderResults() {
-            els.resultsContainer.innerHTML = '';
-            
-            const hasFilter = state.filters.selectedBrand || state.filters.selectedSubCat || state.filters.brandSearch || state.filters.subCatSearch;
-            let totalVisibleItems = 0;
-            const sortedBrands = Object.keys(state.data).sort();
-
-            sortedBrands.forEach(brand => {
-                if (state.filters.selectedBrand && state.filters.selectedBrand !== brand) return;
-                if (state.filters.brandSearch && !brand.toLowerCase().includes(state.filters.brandSearch)) return;
-
-                const brandData = state.data[brand];
-                const colors = getBrandColors(brand);
-
-                const validSubCats = Object.keys(brandData).sort().filter(subCat => {
-                    if (state.filters.selectedSubCat && state.filters.selectedSubCat !== subCat) return false;
-                    if (state.filters.subCatSearch && !subCat.toLowerCase().includes(state.filters.subCatSearch)) return false;
-                    return true;
-                });
-
-                if (validSubCats.length === 0) return;
-
-                const itemCount = validSubCats.reduce((sum, sc) => sum + brandData[sc].length, 0);
-                totalVisibleItems += itemCount;
-
-                // セクション（スマホ向けにシンプル化）
-                const section = document.createElement('div');
-                section.className = 'bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden fade-in';
-
-                const header = document.createElement('button');
-                header.type = "button";
-                header.className = 'w-full flex items-center justify-between p-4 bg-white active:bg-slate-50 transition-colors text-left border-b border-slate-100';
-                header.style.borderLeft = `5px solid ${colors.border}`;
-
-                header.innerHTML = `
-                    <div class="pointer-events-none overflow-hidden">
-                        <h3 class="text-lg font-bold text-slate-800 truncate">${escapeHtml(brand)}</h3>
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded inline-block mt-1" style="background:${colors.bg}; color:${colors.text}">${itemCount} Items</span>
-                    </div>
-                    <div class="w-8 h-8 flex items-center justify-center text-slate-400">
-                        <i class="fas fa-chevron-down transition-transform duration-300 toggle-icon"></i>
-                    </div>
-                `;
-
-                const content = document.createElement('div');
-                content.className = 'p-4 space-y-6 bg-white';
-                
-                if (hasFilter) {
-                    content.classList.remove('hidden');
-                    header.querySelector('.toggle-icon').style.transform = 'rotate(0deg)';
-                } else {
-                    content.classList.add('hidden');
-                    header.querySelector('.toggle-icon').style.transform = 'rotate(-90deg)';
-                }
-
-                header.onclick = () => {
-                    const isHidden = content.classList.contains('hidden');
-                    if (isHidden) {
-                        content.classList.remove('hidden');
-                        header.querySelector('.toggle-icon').style.transform = 'rotate(0deg)';
-                    } else {
-                        content.classList.add('hidden');
-                        header.querySelector('.toggle-icon').style.transform = 'rotate(-90deg)';
-                    }
-                };
-
-                validSubCats.forEach(subCat => {
-                    const items = brandData[subCat];
-                    const subSection = document.createElement('div');
-                    subSection.innerHTML = `
-                        <div class="flex items-center gap-2 mb-3">
-                            <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-                            <h4 class="font-bold text-sm text-slate-700">${escapeHtml(subCat)}</h4>
-                        </div>
-                        <div class="grid grid-cols-1 gap-3">
-                            ${items.map(item => `
-                                <a href="https://www.amazon.co.jp/dp/${escapeHtml(item.asin)}" target="_blank" rel="noopener" class="block bg-white border border-slate-200 rounded-lg p-3 active:border-blue-400 active:bg-blue-50 transition-all h-28 flex gap-3 overflow-hidden relative shadow-sm">
-                                    <div class="w-20 flex-shrink-0 flex items-center justify-center bg-slate-50 rounded p-1">
-                                        ${item.image ? `<img src="${escapeHtml(item.image)}" class="max-w-full max-h-full object-contain mix-blend-multiply">` : '<span class="text-[10px] text-slate-300">No Img</span>'}
-                                    </div>
-                                    <div class="flex-1 flex flex-col justify-between min-w-0 py-0.5">
-                                        <p class="text-xs font-bold text-slate-700 line-clamp-2 leading-snug" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</p>
-                                        <div>
-                                            <div class="flex justify-between items-end">
-                                                <span class="text-base font-bold text-red-600">¥${item.price !== '-' ? Number(String(item.price).replace(/,/g,'')).toLocaleString() : '-'}</span>
-                                            </div>
-                                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
-                                                <span>${escapeHtml(item.date)}</span>
-                                                <span class="font-mono">${escapeHtml(item.asin)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="absolute top-2 right-2 text-blue-300 text-[10px]">
-                                        <i class="fas fa-external-link-alt"></i>
-                                    </div>
-                                </a>
-                            `).join('')}
-                        </div>
-                    `;
-                    content.appendChild(subSection);
-                });
-
-                section.appendChild(header);
-                section.appendChild(content);
-                els.resultsContainer.appendChild(section);
-            });
-
-            els.statusText.textContent = `表示中: ${totalVisibleItems} 商品`;
-        }
-    </script>
+    // init
+    updateAllViewButtonUI();
+    showStart();
+  </script>
 </body>
 </html>
+```
