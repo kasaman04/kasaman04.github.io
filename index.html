@@ -408,7 +408,7 @@
       state.uniqueBrands = Array.from(brands).sort((a,b) => a.localeCompare(b, "ja"));
       state.uniqueSubCats = Array.from(subCats).sort((a,b) => a.localeCompare(b, "ja"));
 
-      // 初期状態：カテゴリを選ぶか ALL View で出す（好みがあれば変更可）
+      // 初期状態
       state.filters.selectedBrand = null;
       state.filters.selectedSubCat = null;
       state.filters.allView = false;
@@ -458,10 +458,21 @@
         btn.style.borderColor = colors.border;
         btn.style.color = colors.text;
 
-        btn.textContent = `${b} (${countItems({ brand: b })})`;
+        // ★変更：選択が分かるように ✓ を表示 & 強調
+        const count = countItems({ brand: b });
+        btn.textContent = `${selected ? "✓ " : ""}${b} (${count})`;
+        btn.style.boxShadow = selected ? "0 0 0 2px rgba(15,23,42,0.35)" : "none";
 
+        // ★変更：カテゴリ未選択でブランドだけ押すと「反応がない」ように見えるので自動でALL View ON
         btn.onclick = () => {
           state.filters.selectedBrand = (state.filters.selectedBrand === b) ? null : b;
+
+          if (state.filters.selectedBrand && !state.filters.selectedSubCat && !state.filters.allView) {
+            state.filters.allView = true;
+            state.filters._savedSubCat = null;
+            updateAllViewButtonUI();
+          }
+
           renderFilterTags();
           renderResults();
         };
@@ -518,7 +529,7 @@
 
       const f = state.filters;
 
-      // 通常モードは「カテゴリを押さないと出ない」仕様にする
+      // 通常モードは「カテゴリを押さないと出ない」仕様
       if (!f.selectedSubCat) {
         const hint = document.createElement("div");
         hint.className = "bg-white border border-slate-200 shadow-sm rounded-2xl p-5 text-sm text-slate-700";
@@ -545,13 +556,10 @@
         if (bSearch && !brand.toLowerCase().includes(bSearch)) continue;
 
         const subMap = data[brand] || {};
-        const subList = Object.keys(subMap).sort((a,b) => a.localeCompare(b, "ja"));
 
-        // selectedSubCat に一致するものだけ
         const subCat = f.selectedSubCat;
         if (!subMap[subCat]) continue;
 
-        // カテゴリ検索がかかっていて一致しないならスキップ
         if (sSearch && !subCat.toLowerCase().includes(sSearch)) continue;
 
         const items = subMap[subCat] || [];
@@ -579,7 +587,7 @@
 
         const body = document.createElement("div");
         body.className = "px-4 pb-4";
-        body.style.display = "block"; // 選択カテゴリの結果なのでデフォルト展開
+        body.style.display = "block";
 
         header.onclick = () => {
           const isOpen = body.style.display !== "none";
@@ -663,7 +671,7 @@
 
         const body = document.createElement("div");
         body.className = "px-4 pb-4";
-        body.style.display = "block"; // ALL View は「出す」が目的なのでデフォルト展開
+        body.style.display = "block";
 
         header.onclick = () => {
           const isOpen = body.style.display !== "none";
@@ -899,4 +907,3 @@
   </script>
 </body>
 </html>
-
